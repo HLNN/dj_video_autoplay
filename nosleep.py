@@ -14,15 +14,15 @@ REC_URL = ' http://xjtudj.edu.cn/course/course_updateUserWatchRecord.do'
 
 def login():
     session = requests.session()
-    #访问主页
-    session.get("http://xjtudj.edu.cn/", headers=HEADERS)
-    #访问CAS
+    # 访问主页
+    # session.get("http://xjtudj.edu.cn/", headers=HEADERS)
+    # 访问CAS
     response = session.get("http://xjtudj.edu.cn/pcweb/cas.jsp", headers=HEADERS)
-    #提交CAS表单
+    # 提交CAS表单
     pattern = re.compile('name="lt".*?value="(.*?)".*?name="execution".*?value="(.*?)"', re.S)
     item = re.findall(pattern, response.text)[0]
-	username = 'hln18773372567'
-	password = input("请输入密码:")
+    username = input("请输入NetID:") or "hln18773372567"
+    password = input("请输入密码:")
     data = {
         'username': username,
         'password': password,
@@ -32,21 +32,29 @@ def login():
         'submit': '登录',
     }
     response = session.post(response.url, data=data, headers=HEADERS)
-    #跳转主页（302改200了）
-    pattern = re.compile('<a class="popup-with-zoom-anim.*?(http.*?)\'', re.S)
-    item = re.findall(pattern, response.text)
-    session.get(item[0], headers=HEADERS)
-    response = session.get("http://xjtudj.edu.cn/myzone/zone_index.do", headers=HEADERS)
 
-    #进入进行中课程
+    # 匹配ticket（302改200了）
+    pattern = re.compile('<a class="popup-with-zoom-anim.*?(http.*?)\'', re.S)
+    ticket = re.findall(pattern, response.text)[0]
+    # 跳转主页
+    session.get(ticket, headers=HEADERS)
+    HEADERS['Referer'] = ticket
+    response = session.get("http://xjtudj.edu.cn/myzone/zone_index.do", headers=HEADERS)
+    print("登陆成功!!!")
+
+    # 进入进行中课程 暂只支持第一个（单）课程
     pattern = re.compile('进行中.*?newShowClassDetail\(\'(.*?)\'.*?详情', re.S)
     item = re.findall(pattern, response.text)[0]
+    HEADERS['Referer'] = "http://xjtudj.edu.cn/myzone/zone_index.do"
     response = session.get("http://xjtudj.edu.cn/myzone/zone_newStudyPlanDetail.do?classID=" + item, headers=HEADERS)
-    HEADERS['Referer'] = "http://xjtudj.edu.cn/myzone/zone_newStudyPlanDetail.do?classID=" + item
+    print("获取课程链接成功!!!")
 
-    pattern = re.compile('已观看(&nbsp;)*([0-9]*).*?秒.*?href="(.*?)">去观看', re.S)
+    # 匹配视频列表
+    HEADERS['Referer'] = "http://xjtudj.edu.cn/myzone/zone_newStudyPlanDetail.do?classID=" + item
+    pattern = re.compile('已观看(&nbsp;)*([0-9]*).*?秒.*?href="(http://xjtudj.edu.cn:80/course/course_detail.do.[\w=&]*)">去观看', re.S)
     items = re.findall(pattern, response.text)
-    print("登陆成功!!!")
+    if items:
+        print("获取视频列表成功!!!")
     return session, items
 
 
