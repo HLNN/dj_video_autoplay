@@ -5,10 +5,13 @@ import time
 import requests
 import re
 
+# 时间间隔可设置为零 单次提交时间增加量不应要超过50
+SLEEPTIME = 0
+EACHTIMEPLUS = 40
+
 HEADERS = {
     'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.167 Safari/537.36',
 }
-
 REC_URL = ' http://xjtudj.edu.cn/course/course_updateUserWatchRecord.do'
 
 
@@ -59,13 +62,13 @@ def login():
 
 
 def learncourse(session, nowTime, url):
-    nowTime = 20
+    nowTime = 0
     duration = 0
     response = session.get(url).text
     pattern = re.compile('duration" value="([0-9]*)"', re.S)
     duration = int(re.findall(pattern, response)[0])
 
-    #data
+    # data
     pattern = re.compile('ccID=([0-9]*)&cateID=([0-9]*)&courseID=([0-9]*)&classID=([0-9]*)', re.S)
     item = re.findall(pattern, url)
     data = {
@@ -77,9 +80,9 @@ def learncourse(session, nowTime, url):
     print("已获取课程信息!!! 开始自动学习" + url + "!!!")
 
     while True:
-        nowTime = nowTime + 40
+        nowTime = nowTime + EACHTIMEPLUS
         if nowTime > duration:
-            time.sleep(0)
+            time.sleep(SLEEPTIME)
             data['watchTime'] = duration
             session.post(REC_URL, data=data)
             print("finish!", url)
@@ -93,6 +96,7 @@ def learncourse(session, nowTime, url):
 def main():
     courses = []
     session, courses = login()
+    print(courses)
     for course in courses:
         learncourse(session, course[1], course[2])
         print()
