@@ -15,35 +15,41 @@ password = ""
 
 
 def login():
-    session = requests.session()
-    # 访问主页
-    # session.get("http://xjtudj.edu.cn/", headers=HEADERS)
-    # 访问CAS
-    response = session.get("http://xjtudj.edu.cn/pcweb/cas.jsp", headers=HEADERS)
-    # 提交CAS表单
-    pattern = re.compile('name="lt".*?value="(.*?)".*?name="execution".*?value="(.*?)"', re.S)
-    item = re.findall(pattern, response.text)[0]
-    data = {
-        'username': username,
-        'password': password,
-        'lt': item[0],
-        'execution': item[1],
-        '_eventId': 'submit',
-        'submit': '登录',
-    }
-    response = session.post(response.url, data=data, headers=HEADERS)
+    try:
+        session = requests.session()
+        # 访问主页
+        session.get("http://xjtudj.edu.cn/", headers=HEADERS)
+        # 访问CAS
+        response = session.get("http://xjtudj.edu.cn/pcweb/cas.jsp", headers=HEADERS)
+        # 提交CAS表单
+        pattern = re.compile('name="lt".*?value="(.*?)".*?name="execution".*?value="(.*?)"', re.S)
+        item = re.findall(pattern, response.text)[0]
+        data = {
+            'username': username,
+            'password': password,
+            'lt': item[0],
+            'execution': item[1],
+            '_eventId': 'submit',
+            'submit': '登录',
+        }
+        response = session.post(response.url, data=data, headers=HEADERS)
 
-    # 匹配ticket（302改200了）
-    pattern = re.compile('<a class="popup-with-zoom-anim.*?(http.*?)\'', re.S)
-    ticket = re.findall(pattern, response.text)[0]
-    # 跳转主页
-    session.get(ticket, headers=HEADERS)
-    HEADERS['Referer'] = ticket
-    response = session.get("http://xjtudj.edu.cn/myzone/zone_index.do", headers=HEADERS)
-    if response.status_code == 200:
-        print("登陆成功!!!")
-        return session
-    else:
+        # 匹配ticket（302改200了）
+        pattern = re.compile('<a class="popup-with-zoom-anim.*?(http.*?)\'', re.S)
+        ticket = re.findall(pattern, response.text)[0]
+        # 跳转主页
+        session.get(ticket, headers=HEADERS)
+        HEADERS['Referer'] = ticket
+        response = session.get("http://xjtudj.edu.cn/myzone/zone_index.do", headers=HEADERS)
+        if response.status_code == 200:
+            print("登陆成功!!!")
+            return session
+        else:
+            print("登陆失败!!!")
+            time.sleep(5)
+            session = login()
+            return session
+    except:
         print("登陆失败!!!")
         time.sleep(5)
         session = login()
@@ -51,7 +57,8 @@ def login():
 
 
 def save(people):
-    with open('./people.csv', 'a', newline='') as csvfile:
+    filename = "./" + time.strftime("%Y-%m-%d", time.localtime()) + ".csv"
+    with open(filename, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow([time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), people])
         print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "," + people)
