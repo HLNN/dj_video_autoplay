@@ -7,7 +7,7 @@ import re
 import csv
 
 HEADERS = {
-    'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.167 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.167 Safari/537.36',
 }
 
 username = ""
@@ -45,12 +45,12 @@ def login():
             print("登陆成功!!!")
             return session
         else:
-            print("登陆失败!!!")
+            print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), "登陆失败!!!")
             time.sleep(5)
             session = login()
             return session
     except:
-        print("登陆失败!!!")
+        print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), "登陆失败!!!")
         time.sleep(5)
         session = login()
         return session
@@ -61,7 +61,7 @@ def save(people):
     with open(filename, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow([time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), people])
-        print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "," + people)
+        print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "," + str(people))
 
 
 def sleep():
@@ -95,10 +95,6 @@ def sleep():
 
 
 def main():
-    global username
-    global password
-    username = input("请输入NetID:") or "hln18773372567"
-    password = input("请输入密码:")
     session = login()
     while True:
         response = session.get("http://xjtudj.edu.cn/myzone/zone_index.do", headers=HEADERS)
@@ -114,4 +110,12 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    global username
+    global password
+    username = input("请输入NetID:") or "hln18773372567"
+    password = input("请输入密码:")
+    while True:
+        try:
+            main()
+        except:
+            time.sleep(5)
